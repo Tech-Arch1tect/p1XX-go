@@ -1,4 +1,4 @@
-package p100
+package p1XX
 
 import (
 	"bytes"
@@ -46,6 +46,12 @@ type P100Status struct {
 		Region             string `json:"Europe/Kiev"`
 		TimeDiff           int    `json:"time_diff"`
 		Lang               string `json:"lang"`
+		CurrentPower       int    `json:"current_power"`
+		Today_runtime      int    `json:"today_runtime"`
+		Month_runtime      int    `json:"month_runtime"`
+		Today_energy       int    `json:"today_energy"`
+		Month_energy       int    `json:"month_energy"`
+		Local_time         string `json:"local_time"`
 	} `json:"result"`
 }
 
@@ -122,7 +128,7 @@ func (d *P100Device) DoRequest(payload []byte) ([]byte, error) {
 
 func (d *P100Device) CheckErrorCode(errorCode int) error {
 	if errorCode != 0 {
-		return errors.New(fmt.Sprintf("Got error code %d", errorCode))
+		return fmt.Errorf("got error code %d", errorCode)
 	}
 
 	return nil
@@ -232,7 +238,7 @@ func (d *P100Device) Switch(status bool) (err error) {
 	}
 
 	if jsonResp.ErrorCode != 0 {
-		return errors.New(fmt.Sprintf("Got error code %d", jsonResp.ErrorCode))
+		return fmt.Errorf("got error code %d", jsonResp.ErrorCode)
 	}
 
 	return
@@ -264,6 +270,34 @@ func (d *P100Device) GetDeviceInfo() (*P100Status, error) {
 
 	SSIDEncoded, _ := base64.StdEncoding.DecodeString(status.Result.SSID)
 	status.Result.SSID = string(SSIDEncoded)
+
+	if status.Result.Model == "P110" {
+		status, err = d.GetEnergyUsage(status)
+		if err != nil {
+			return nil, err
+		}
+	}
+	return status, nil
+}
+
+func (d *P100Device) GetEnergyUsage(status *P100Status) (*P100Status, error) {
+	if d.token == nil {
+		return nil, errors.New("Login was not performed")
+	}
+
+	payload, _ := json.Marshal(map[string]interface{}{
+		"method": "get_energy_usage",
+	})
+
+	payload, err := d.DoRequest(payload)
+	if err != nil {
+		return nil, err
+	}
+
+	json.NewDecoder(bytes.NewBuffer(payload)).Decode(status)
+	if err = d.CheckErrorCode(status.ErrorCode); err != nil {
+		return nil, err
+	}
 
 	return status, nil
 }

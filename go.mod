@@ -1,4 +1,4 @@
-module github.com/artemvang/p100-go
+module github.com/Tech-Arch1tect/p1XX-go
 
 go 1.16
 
