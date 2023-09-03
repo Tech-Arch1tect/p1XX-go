@@ -7,7 +7,7 @@ import (
 )
 
 func main() {
-	d := p1XX.New("xxx.xxx.xxx.xxx", "email/username", "password")
+	d := p1XX.New("xxx.xxx.xxx.xxx", "email/username", "password", 10)
 	if err := d.Handshake(); err != nil {
 		log.Panic(err)
 	}

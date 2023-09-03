@@ -15,8 +15,6 @@ import (
 	"time"
 )
 
-const Timeout = time.Second * 15
-
 type P100Status struct {
 	ErrorCode int `json:"error_code"`
 	Result    struct {
@@ -65,7 +63,8 @@ type P100Device struct {
 	client          *http.Client
 }
 
-func New(ip, email, password string) *P100Device {
+func New(ip, email, password string, timeout time.Duration) *P100Device {
+	t := time.Second * timeout
 	h := sha1.New()
 	h.Write([]byte(email))
 	digest := hex.EncodeToString(h.Sum(nil))
@@ -76,7 +75,7 @@ func New(ip, email, password string) *P100Device {
 		ip:              ip,
 		encodedEmail:    encodedEmail,
 		encodedPassword: encodedPassword,
-		client:          &http.Client{Timeout: Timeout},
+		client:          &http.Client{Timeout: t},
 	}
 }
 
